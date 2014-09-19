@@ -1,0 +1,138 @@
+* org-expenses.el
+
+Tracking expenses in [[http://orgmode.org][org]] files works very well. The org capture
+mechanism can be used to quickly insert them. This library provides
+utility functions to generate basic statistics from expense lists.
+
+It assumes the following conventions:
+
+- expense items are headings, to be able to apply tags and
+- properties where one is a currency code - price pair
+
+An expense item is a headline that complies to those two
+points. Expense items can have one category, but in contrast to org's
+property ~CATEGORY~, an expense category is just the name of the
+parent headline.
+
+Then those items are gathered from some org files and org tables are
+generated to create an overview.
+
+
+** Installation
+
+Clone this repository and add it to emacs load path. Then ~require~
+the file:
+
+#+begin_src emacs-lisp :tangle yes
+  (require 'org-expenses)
+#+end_src
+
+** Configuration
+
+If you have files with expense items, you can set them in your init
+file. Either specify a list of files or just a string which then
+should be a directory containing org files. All of them are
+considered.
+
+#+begin_src emacs-lisp :tangle yes
+  (setq org-expenses/files "~/org/expenses")
+#+end_src
+
+Then it might be convenient to assign a key to the
+~org-expenses/expense-view~ function. It shows the summary to those
+files.
+
+Since these files can grow quickly but usually don't change often,
+there is a cache mechanism provided. It uses [[https://sqlite.org/][sqlite3]] and stores
+expense items in a database file. If a file changes, it is simply
+re-added. You can set the sqlite3 executable if it differs from
+~/usr/bin/sqlite3~. Then you must provide a file location for the
+database file, otherwise the cache is disabled.
+
+#+begin_src emacs-lisp :tangle yes
+  (setq org-expenses/sqlite-cmd "/usr/local/bin/sqlite3")
+  (setq org-expenses/sqlite-db-file "~/.expenses.db")
+#+end_src
+
+As described above, only headlines with a currency-price property are
+considered. The list ~org-expenses/currency-list~ names all known
+currencies.
+
+** Expense View Mode
+
+The function ~org-expense/expense-view~ reads the org files and
+displays a buffer with summary information of the expenses. It is set
+to "epxense-view-mode" that is org mode but with a custom keymap that
+makes more sense for this buffer:
+
+| Key    | Binding                                          |
+|--------+--------------------------------------------------|
+| RET    | org-expenses/expense-view-jump-to-entry          |
+| C-n    | org-expenses/expense-view-move-next              |
+| C-p    | org-expenses/expense-view-move-prev              |
+| C-t    | org-expenses/expense-view-toggle-table           |
+| +      | org-expenses/expense-view-widen-date             |
+| -      | org-expenses/expense-view-narrow-date            |
+| .      | org-expenses/expense-view-goto-this-month        |
+| /      | org-expenses/expense-view-search-item            |
+| C      | org-expenses/expense-view-search-remove-category |
+| F      | org-expenses/expense-view-toggle-follow-entries  |
+| T      | org-expenses/expense-view-search-remove-tag      |
+| b      | org-expenses/expense-view-prev-date              |
+| c      | org-expenses/expense-view-search-add-category    |
+| d      | org-expenses/expense-view-search-date            |
+| f      | org-expenses/expense-view-next-date              |
+| g      | org-expenses/expense-view-update-view            |
+| l      | org-expenses/expense-view-last-search            |
+| n      | org-expenses/expense-view-move-next              |
+| p      | org-expenses/expense-view-move-prev              |
+| q      | org-expenses/expense-view-quit-window            |
+| t      | org-expenses/expense-view-search-add-tag         |
+| v      | org-expenses/expense-view-focus-item             |
+| <down> | org-expenses/expense-view-move-next              |
+| <up>   | org-expenses/expense-view-move-prev              |
+|--------+--------------------------------------------------|
+
+If this function is invoked with one prefix argument, it will clear
+the sqlite db first (if it is used). With two prefix arguments the
+expense view is generated for the current buffer (which must be in org
+mode).
+
+This buffer is divided in two parts: the first shows a list of tables
+with summary information, and the second is the item table. Both can
+be configured a little. The variable ~org-expenses/overview-table~ is
+bound to an alist with headline - function pairs. Each function is
+expected to take a result list and return a summary table to
+display. The headline and table is inserted into the buffer. And
+~org-expenses/item-columns~ is a list containing keys of an expense
+item that are used as columns. If nil, it defaults to
+~(:item :category :date)~.
+
+Selecting expense items in the view is done via a plist that contains
+4 things: a date range, an item name, a tag list and a category
+list. A date range can be an org date range like
+~[2014-05-10]--[2014-05-20]~ or an abbreviated one like ~2014-05~. The
+latter is the short version for ~[2014-05-01]--[2014-05-31]~. And
+likewise, ~2014~ is short for ~[2014-01-01]--[2014-12-31]~.
+
+Tags and categories can be included by specifying them and execluded
+by prefixing the names with a ~-~. Item names are substring matches.
+
+** Other interactive things
+
+There are two functions
+
+- ~org-expense/insert-item-table~ that asks for a search plist and
+  inserts a table with all matching items
+- ~org-expense/insert-summary-table~ same as above but inserting a
+  summary table of the result. If a grouping function is specified,
+  the result is grouped first. There are some predefined
+  ~org-expenses/group-by…~ functions that can be used.
+
+
+** License
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.

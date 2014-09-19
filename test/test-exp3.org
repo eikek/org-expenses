@@ -1,0 +1,6 @@
+
+* item
+  :PROPERTIES:
+  :eur:      10.00
+  :chf:
+  :END:

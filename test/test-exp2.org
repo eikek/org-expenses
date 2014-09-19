@@ -1,0 +1,48 @@
+#+TITLE: Test Expenses 2014 (2)
+#+COLUMNS: %37ITEM %date %chf{$} %eur{$} %TAGS
+
+* Sonstiges
+** Bücher
+*** Buch1                                                              :book:
+    :PROPERTIES:
+    :eur:      15.99
+    :date:     [2014-08-31 So]
+    :END:
+
+** Pizza                                                         :restaurant:
+   :PROPERTIES:
+   :date:     [2014-08-29 Fr]
+   :chf:      20.00
+   :END:
+
+** Cablecom                                                     :telecom:use:
+   :PROPERTIES:
+   :date:     [2014-08-25 Mo]
+   :chf:      56.50
+   :END:
+
+** Cellphone                                                 :telecom:gadget:
+   :PROPERTIES:
+   :date:     [2014-08-30 Sa]
+   :chf:      349.99
+   :END:
+
+* Work
+
+** Cablecom                                                         :telecom:
+   :PROPERTIES:
+   :date:     [2014-08-25 Mo]
+   :chf:      56.50
+   :END:
+
+** Bücher
+*** Buch2                                                              :book:
+    :PROPERTIES:
+    :date:     [2014-08-01 Fr]
+    :chf:      39.99
+    :END:
+*** Buch2                                                              :book:
+    :PROPERTIES:
+    :chf:      10.00
+    :date:     [2014-08-26 Di]
+    :END:
