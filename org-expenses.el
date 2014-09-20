@@ -63,7 +63,7 @@ If a directory is specified, all .org files are considered.")
 
 (defvar org-expenses/date-property :date
   "The property key used to specify the date of an expense item in your files.
-Your expense item headlines should have a date property.  It must
+Your expense item headlines should have such a property.  It must
 be convertable into a keyword.")
 
 (defvar org-expenses/sqlite-db-file nil
@@ -498,29 +498,47 @@ defined in `org-expenses/currency-list'."
 
 (defun org-expenses/hl--to-item (hl mfile)
   "Converts an org headline into a p-list."
-  (append
-   (list :tags (org-element-property :tags hl)
-         :level (org-element-property :level hl)
-         :item (org-element-property :raw-value hl)
-         :begin (org-element-property :begin hl)
-         :filename (abbreviate-file-name mfile)
-         :path (org-expenses/hl--get-hl-path
-                (org-element-property :parent hl))
-         :category (org-element-property :raw-value
-                                         (org-element-property :parent hl)))
-   ;; -mapcat 'identity, because -flatten remove all nils
-   (-mapcat 'identity
-            (org-element-map hl 'node-property
-              (lambda (np)
-                (let* ((key (intern (concat ":"
-                                            (org-element-property :key np))))
-                       (ckey (org-expenses/get-currency key))
-                       (value (org-element-property :value np)))
-                  (if ckey
-                      (list ckey (if (or (null value) (s-equals-p value ""))
-                                     nil
-                                   (org-expenses/string-or-number value)))
-                    (list key (org-expenses/string-or-number value)))))))))
+  (let ((props
+         ;; -mapcat 'identity, because -flatten removes all nils,
+         ;; which destroys plist structure
+         (-mapcat 'identity
+                  (org-element-map hl 'node-property
+                    (lambda (np)
+                      (let* ((key (intern
+                                   (concat ":"
+                                           (downcase (org-element-property :key np)))))
+                             (ckey (org-expenses/get-currency key))
+                             (value (org-element-property :value np)))
+                        (if ckey
+                            (list ckey (if (or (null value) (s-equals-p value ""))
+                                           nil
+                                         (org-expenses/string-or-number value)))
+                          (if (equal key org-expenses/date-property)
+                              (list :date (org-expenses/string-or-number value))
+                            (list key (org-expenses/string-or-number value)))))))))
+        (defaults
+          (list :tags (org-element-property :tags hl)
+                :level (org-element-property :level hl)
+                :item (org-element-property :raw-value hl)
+                :begin (org-element-property :begin hl)
+                :filename (abbreviate-file-name mfile)
+                :path (org-expenses/hl--get-hl-path
+                       (org-element-property :parent hl))
+                :category (org-element-property :raw-value
+                                                (org-element-property :parent hl)))))
+    (org-expenses/plist-map props
+      (lambda (k v)
+        (setq defaults
+              (plist-put defaults k v))
+        nil))
+    (unless (plist-get defaults :date)
+      (let ((ts (org-element-map hl 'timestamp
+                  (lambda (ts) (org-element-property :raw-value ts))
+                  nil t)))
+        (when ts
+            (setq defaults
+                  (plist-put defaults :date ts)))))
+    defaults))
 
 (defun org-expenses/collect--props (tree filename filter &optional maxsize)
   "Filter the org ast TREE and convert headlines to plists.
@@ -622,7 +640,7 @@ according to the most specific part. So '[2014-08]' expands to
     (lambda (el)
       (org-expenses/date-in-range-p
        range
-       (plist-get el (or org-expenses/date-property :date))))))
+       (plist-get el :date)))))
 
 
 
@@ -1161,13 +1179,17 @@ to the elements of RESULTS.  Keys are compared by `equal'."
 "Use with `org-expenses/group-results' to group results based on month."
   (let* ((date (plist-get el :date))
         (dateparts (org-expenses/parse-date-parts date)))
-    (format "%d/%02d" (car dateparts) (cadr dateparts))))
+    (if date
+        (format "%d/%02d" (car dateparts) (cadr dateparts))
+      "no date")))
 
 (defun org-expenses/group-by-year (el)
   "Use with `org-expenses/group-results' to group results based on year."
   (let* ((date (plist-get el :date))
         (dateparts (org-expenses/parse-date-parts date)))
-    (format "%04d" (car dateparts))))
+    (if date
+        (format "%04d" (car dateparts))
+      "no date")))
 
 
 ;;;; summing

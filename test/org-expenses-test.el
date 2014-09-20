@@ -43,6 +43,12 @@
 (defun org-expenses/parse-test-file ()
   (org-expenses/parse--file "test-exp1.org"))
 
+(defun org-expenses/parste-string (str)
+  (with-temp-buffer
+    (insert str)
+    (org-mode)
+    (org-expenses/parse--file (current-buffer))))
+
 (defun org-expenses/get-headline (name)
   "Parse 'test-exp1.org' and return first headline with NAME."
   (let ((ast (org-expenses/parse-test-file)))
@@ -312,6 +318,32 @@
     (should (equal (length items) 3))
     (should (equal (plist-get meta :truncated) t))
     (should (equal (plist-get meta :size) 2))))
+
+(ert-deftest org-expenses/property-override-test ()
+  (let* ((items (org-expenses/collect--props
+                 (org-expenses/parste-string
+                  "* not a category\n
+** my item\n
+   :PROPERTIES:
+   :chf: 12.44
+   :CATEGORY: fish
+   :END:")
+                 "none"
+                 'identity))
+         (cat (plist-get (cadr items) :category)))
+    (should (equal cat "fish")))
+  (let* ((items (org-expenses/collect--props
+                 (org-expenses/parste-string
+                  "* not a category\n
+** my item\n
+   :PROPERTIES:
+   :chf: 12.44
+   :item: another item
+   :END:")
+                 "none"
+                 'identity))
+         (cat (plist-get (cadr items) :item)))
+    (should (equal cat "another item"))))
 
 (ert-deftest org-expenses/filter-tags-test ()
   (let ((filter (org-expenses/filter-tags "-book")))
@@ -593,3 +625,33 @@
     (should (equal 3 (length (cdr (assoc "Bücher" (cdr res))))))
     (should (equal 1 (length (cdr (assoc "Work" (cdr res))))))
     (should (equal 3 (length (cdr (assoc "Sonstiges" (cdr res))))))))
+
+(ert-deftest org-expenses/custom-date-property-test ()
+  (let* ((org-expenses/date-property :datum)
+         (items (org-expenses/collect--props
+                 (org-expenses/parste-string
+                  "* not a category
+** my item
+   :PROPERTIES:
+   :chf: 12.44
+   :datum: [2014-09-14]
+   :END:")
+                 "none"
+                 'identity)))
+    (should (equal (plist-get (cadr items) :date)
+                   "[2014-09-14]"))))
+
+(ert-deftest org-expenses/get-date-from-somewhere-test ()
+  (let* ((items (org-expenses/collect--props
+                 (org-expenses/parste-string
+                  "* not a category
+** my item
+   :PROPERTIES:
+   :chf: 12.44
+   :END:
+
+   [2014-09-16]")
+                 "none"
+                 'identity)))
+    (should (equal (plist-get (cadr items) :date)
+                   "[2014-09-16]"))))
