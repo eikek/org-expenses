@@ -961,11 +961,12 @@ expense items in FILE are inserted into the sqlite3 database."
 
 (defun org-expenses/sqlite--init-schema (&optional dbfile)
   "Creates the two tables in database DBFILE."
+  (let ((expenses "create table expenses (filename text, item text, category text, tags text, date text)")
+        (files "create table files (name text, time int)"))
   (unless (org-expenses/sqlite--table-p "expenses" dbfile)
-    (org-expenses/sqlite-exec "create table expenses (filename text, item text, category text, tags text)"
-                         dbfile))
+    (org-expenses/sqlite-exec expenses dbfile))
   (unless (org-expenses/sqlite--table-p "files" dbfile)
-    (org-expenses/sqlite-exec "create table files (name text, time int)" dbfile)))
+    (org-expenses/sqlite-exec files dbfile))))
 
 (defun org-expenses/sqlite-import-files (files)
   "Import FILES into database.
