@@ -8,14 +8,15 @@ It assumes the following conventions:
 
 - expense items are headings, to be able to apply tags and
 - properties where one is a currency code - price pair
+- a ~:date:~ property
 
-An expense item is a headline that complies to those two
-points. Expense items can have one category, but in contrast to org's
-property ~CATEGORY~, an expense category is just the name of the
-parent headline.
+An expense item is a headline that complies to those points. Expense
+items can have one category, but in contrast to org's property
+~CATEGORY~, an expense category is just the name of the parent
+headline.
 
-Then those items are gathered from some org files and org tables are
-generated to create an overview.
+All those items are gathered from some org files and tables are
+generated to show an overview of the data.
 
 
 ** Installation

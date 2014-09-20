@@ -1098,13 +1098,6 @@ property-list with the following optional properties:
   part of the date string. Brackets are not required around the
   dates.
 
-TODO
-- :filename A string or list of strings that names the files to
-  search.
-
-- :<currency> A string denoting a number range like '100--200'
-  and <currency> is a (iso3) currency code that you are using.
-
 This function returns a list of property-lists each but the first
 representing one expense item. The first element is a property
 list with some meta information about the results:
