@@ -113,7 +113,7 @@ By default only error output is logged.")
   "A alist of name function pairs, where the function creates a
   table from a result list.")
 
-(defvar org-expenses/item-columns nil
+(defvar org-expenses/item-columns '(:item :category :date)
   "A list of columns to use in items table.")
 
 
@@ -1295,15 +1295,15 @@ and summaries are calculated for each sub-results."
      (org-expenses/summarize-results results))))
 
 
-(defun org-expenses/result-table (results &optional columns)
+(defun org-expenses/result-table (results columns)
   "Make a list of rows each representing an item in RESULTS.
 
-COLUMNS may be a list of keys used to retrieve values for each
-column. By default it is (:item :category :date). Currency
-columns are added and should not be specified."
+COLUMNS is a list of keys used to retrieve values for each
+column. Currency columns are added by this function and should
+not be specified."
   (let* ((summary (org-expenses/summarize-results results))
          (currs (org-expenses/sort-keywords (org-expenses/plist-kmap summary 'identity)))
-         (cols (append (or columns '(:item :category :date)) currs))
+         (cols (append columns currs))
          (head (list (-map 'symbol-name cols) 'hline)))
     (append head
             (-map (lambda (el)
@@ -1341,7 +1341,7 @@ If GROUP-FN is given, it is used to group the results first."
   (interactive "xSearch: ")
   (let ((result (org-expenses/search search)))
     (org-expenses/insert--table
-     (org-expenses/result-table result))))
+     (org-expenses/result-table result org-expenses/item-columns))))
 
 
 ;;;;; overview mode
