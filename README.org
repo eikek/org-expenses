@@ -18,8 +18,63 @@ parent headline. This can be overriden by the ~CATEGORY~ property.
 The date of the expense item is either given by the ~:date:~ property
 or the first date that is found underneath the headline.
 
+The following example shows two expense items that are organized below
+a "food" headline, which serves as their default category. The second
+item overrides this category to "restaurant".
+
+#+begin_example
+* food
+** groceries
+   :PROPERTIES:
+   :usd:   25.49
+   :date:  [2014-08-14 Do]
+   :END:
+** pizza
+   :PROPERTIES:
+   :usd:       18.99
+   :date:      [2014-08-25 Mo]
+   :CATEGORY:  restaurant
+   :END:
+#+end_example
+
 All those items are gathered from some org files and tables are
 generated to show an overview of the data.
+
+The standard overview for the last example would look like this:
+
+#+begin_example
+#+TITLE: Expenses [2014-08-14 Do] - [2014-08-25 Mo]
+#+STARTUP: showeverything
+
+Search: ~(:date "2014-08")~
+Showing *2* items
+
+* Overview
+** Summary
+| Curr. |   sum |   max |   min | count |   avg |
+|-------+-------+-------+-------+-------+-------|
+| USD   | 44.48 | 25.49 | 18.99 |     2 | 22.24 |
+
+
+** Categories
+|                |   sum |   max |   min | count |   avg |
+|----------------+-------+-------+-------+-------+-------|
+| restaurant USD | 18.99 | 18.99 | 18.99 |     1 | 18.99 |
+| food USD       | 25.49 | 25.49 | 25.49 |     1 | 25.49 |
+
+
+** Monthly
+|             |   sum |   max |   min | count |   avg |
+|-------------+-------+-------+-------+-------+-------|
+| 2014/08 USD | 44.48 | 25.49 | 18.99 |     2 | 22.24 |
+
+
+* Items
+| item      | category   | date            |   USD |
+|-----------+------------+-----------------+-------|
+| pizza     | restaurant | [2014-08-25 Mo] | 18.99 |
+| groceries | food       | [2014-08-14 Do] | 25.49 |
+#+end_example
 
 
 ** Installation
@@ -108,19 +163,22 @@ be configured a little. The variable ~org-expenses/overview-table~ is
 bound to an alist with headline - function pairs. Each function is
 expected to take a result list and return a summary table to
 display. The headline and table is inserted into the buffer. And
-~org-expenses/item-columns~ is a list containing keys of an expense
-item that are used as columns. If nil, it defaults to
+~org-expenses/item-columns~ is a list containing property keys of an
+expense item that are used as columns. It defaults to
 ~(:item :category :date)~.
 
 Selecting expense items in the view is done via a plist that contains
-4 things: a date range, an item name, a tag list and a category
-list. A date range can be an org date range like
-~[2014-05-10]--[2014-05-20]~ or an abbreviated one like ~2014-05~. The
-latter is the short version for ~[2014-05-01]--[2014-05-31]~. And
-likewise, ~2014~ is short for ~[2014-01-01]--[2014-12-31]~.
-
-Tags and categories can be included by specifying them and execluded
-by prefixing the names with a ~-~. Item names are substring matches.
+4 things: a date range (key ~:date~), an item name (key ~:item~), a
+tag list (key ~:tags~) and a category list (key ~:category~). A date
+range can be an org date range like ~[2014-05-10]--[2014-05-20]~ or an
+abbreviated one like ~2014-05~. The latter is the short version for
+~[2014-05-01]--[2014-05-31]~. And likewise, ~2014~ is short for
+~[2014-01-01]--[2014-12-31]~. Items must match to all given
+criteria. Tags and categories can be included by specifying them and
+execluded by prefixing the names with a ~-~. Item names are substring
+matches. For example ~(:date 2014-08 :tags ("-train" "journey"))~
+would find all items from august 2014 that are tagged with "journey"
+but not with "train".
 
 ** Other interactive things
 
