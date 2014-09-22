@@ -105,11 +105,13 @@ By default only error output is logged.")
 (defvar org-expenses/overview-tables
   '(("** Summary" . org-expenses/summary-table)
     ("** Categories" . (lambda (results)
-                         (org-expenses/summary-table results
-                                                     'org-expenses/group-by-category)))
+                         (org-expenses/summary-table
+                          results
+                          'org-expenses/group-by-category)))
     ("** Monthly" . (lambda (results)
-                      (org-expenses/summary-table results
-                                                  'org-expenses/group-by-month))))
+                      (org-expenses/summary-table
+                       results
+                       'org-expenses/group-by-month))))
   "A alist of name function pairs, where the function creates a
   table from a result list.")
 
@@ -222,22 +224,31 @@ matches, otherwise nil."
    (t nil)))
 
 
-(defun org-expenses/format-currency (curr)
-  "Format the currency code into a string."
-  (if (keywordp curr)
-      (substring (symbol-name curr) 1)
-    curr))
+(defun org-expenses/as-string (obj)
+  "Make OBJ a string.
+If OBJ is a keyword, remove the colon."
+  (cond
+   ((keywordp obj)
+    (substring (symbol-name obj) 1))
+   ((numberp obj)
+    (number-to-string obj))
+   ((stringp obj)
+    obj)
+   (t (error "No string for %s" (prin1-to-string obj)))))
+
 
 
 (defun org-expenses/format-price (price &optional currency)
   (cond
    ((or (null price) (eq price 0)) "")
-   ((org-expenses/string-number-p price) (org-expenses/format-price (string-to-number price)
-                                                          currency))
-   ((numberp price) (concat (if currency
-                                (concat (org-expenses/format-currency currency) " ")
-                              "")
-                            (format "%.2f" price)))
+   ((org-expenses/string-number-p price)
+    (org-expenses/format-price (string-to-number price)
+                               currency))
+   ((numberp price)
+    (concat (if currency
+                (concat (org-expenses/as-string currency) " ")
+              "")
+            (format "%.2f" price)))
    (t "")))
 
 
@@ -1247,7 +1258,7 @@ SUMMARY is expected to be retrieved via `org-expenses/summarize-results'."
      head
      (-map (lambda (curr)
             (let ((values (plist-get summary curr)))
-              (list (org-expenses/format-currency curr)
+              (list (org-expenses/as-string curr)
                     (org-expenses/format-price (plist-get values :sum))
                     (org-expenses/format-price (plist-get values :max))
                     (org-expenses/format-price (plist-get values :min))
@@ -1273,7 +1284,7 @@ plists."
           (-map
            (lambda (curr)
              (let ((values (plist-get sums curr)))
-               (list (concat name " " (org-expenses/format-currency curr))
+               (list (concat name " " (org-expenses/as-string curr))
                      (org-expenses/format-price (plist-get values :sum))
                      (org-expenses/format-price (plist-get values :max))
                      (org-expenses/format-price (plist-get values :min))
@@ -1304,7 +1315,7 @@ not be specified."
   (let* ((summary (org-expenses/summarize-results results))
          (currs (org-expenses/sort-keywords (org-expenses/plist-kmap summary 'identity)))
          (cols (append columns currs))
-         (head (list (-map 'symbol-name cols) 'hline)))
+         (head (list (-map 'org-expenses/as-string cols) 'hline)))
     (append head
             (-map (lambda (el)
                     (-map (lambda (key)
