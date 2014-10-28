@@ -43,7 +43,7 @@
 (defun org-expenses/parse-test-file ()
   (org-expenses/parse--file "test-exp1.org"))
 
-(defun org-expenses/parste-string (str)
+(defun org-expenses/parse-string (str)
   (with-temp-buffer
     (insert str)
     (org-mode)
@@ -321,7 +321,7 @@
 
 (ert-deftest org-expenses/property-override-test ()
   (let* ((items (org-expenses/collect--props
-                 (org-expenses/parste-string
+                 (org-expenses/parse-string
                   "* not a category\n
 ** my item\n
    :PROPERTIES:
@@ -333,7 +333,7 @@
          (cat (plist-get (cadr items) :category)))
     (should (equal cat "fish")))
   (let* ((items (org-expenses/collect--props
-                 (org-expenses/parste-string
+                 (org-expenses/parse-string
                   "* not a category\n
 ** my item\n
    :PROPERTIES:
@@ -629,7 +629,7 @@
 (ert-deftest org-expenses/custom-date-property-test ()
   (let* ((org-expenses/date-property :datum)
          (items (org-expenses/collect--props
-                 (org-expenses/parste-string
+                 (org-expenses/parse-string
                   "* not a category
 ** my item
    :PROPERTIES:
@@ -643,7 +643,7 @@
 
 (ert-deftest org-expenses/get-date-from-somewhere-test ()
   (let* ((items (org-expenses/collect--props
-                 (org-expenses/parste-string
+                 (org-expenses/parse-string
                   "* not a category
 ** my item
    :PROPERTIES:
@@ -655,3 +655,25 @@
                  'identity)))
     (should (equal (plist-get (cadr items) :date)
                    "[2014-09-16]"))))
+
+(ert-deftest org-expenses/negative-values-test ()
+  (let* ((items (org-expenses/collect--props
+                 (org-expenses/parse-string
+                  "* not a category
+** my item 1
+   :PROPERTIES:
+   :chf: 12.44
+   :END:
+** my item 2
+   :PROPERTIES:
+   :chf: -10.44
+   :END: ")
+                 "none"
+                 'identity)))
+    (should (equal 12.44 (plist-get (cadr items) :CHF)))
+    (should (equal -10.44 (plist-get (caddr items) :CHF)))
+    (let ((sum (plist-get (org-expenses/summarize-results items) :CHF)))
+      (should (equal 2.0 (plist-get sum :sum)))
+      (should (equal 1.0 (plist-get sum :avg)))
+      (should (equal 12.44 (plist-get sum :max)))
+      (should (equal -10.44 (plist-get sum :min))))))

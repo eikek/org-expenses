@@ -184,7 +184,7 @@ is returned, but without nil values and in reverse order."
   "Check whether STR represents a number.
 Return t if STR only contains digits and one optional dot."
   (when (and (stringp str)
-             (string-match "^[0-9]*\\.?[0-9]*$" str))
+             (string-match "^-?[0-9]*\\.?[0-9]*$" str))
     t))
 
 (defun org-expenses/string-or-number (str)
