@@ -1327,7 +1327,7 @@ not be specified."
 
 (defun org-expenses/insert--table (table)
   "Insert TABLE at point."
-  (org-babel-insert-result table))
+  (insert (orgtbl-to-orgtbl table nil)))
 
 ;;;; interactive things
 
